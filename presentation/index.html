@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VoceAmica · Hagenthon — Accenture Application Engineering</title>
+<style>
+  :root {
+    --viola: #A100FF;          /* accenti grafici */
+    --viola-testo: #7500C0;    /* viola leggibile come testo su fondo chiaro */
+    --viola-scuro: #5B0096;
+    --viola-tenue: #F0E6FA;
+    --viola-bordo: #D9BFF5;
+    --bg: #F7F3FC;
+    --carta: #FFFFFF;
+    --bordo: #E2D6F0;
+    --ink: #1A0B2E;
+    --testo: #3B3150;
+    --tenue: #5F5675;
+    --rosso: #B0003A;
+    --verde: #0B6B36;
+    /* Unità di slide: 1/100 della larghezza su schermo 16:9. Su schermi più bassi
+       si riduce con l'altezza, così il contenuto non esce mai dalla slide. */
+    --u: min(1vw, 1.778vh);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--testo); overflow: hidden;
+    font-family: "Graphik", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: calc(var(--u) * 1.5); line-height: 1.45; -webkit-font-smoothing: antialiased;
+  }
+  .slide {
+    position: absolute; inset: 0; display: none;
+    /* Il margine basso lascia spazio al piè di pagina fisso: niente sovrapposizioni. */
+    padding: calc(var(--u) * 4.5) calc(var(--u) * 7) calc(var(--u) * 6.5);
+    flex-direction: column; justify-content: center;
+  }
+  .slide::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: calc(var(--u) * 0.6);
+    background: linear-gradient(90deg, var(--viola-testo), var(--viola));
+  }
+  .slide.attiva { display: flex; }
+  .slide.centrata { align-items: center; text-align: center; }
+
+  .eyebrow {
+    display: inline-block; align-self: flex-start;
+    border: 1px solid var(--viola-bordo); background: var(--carta);
+    border-radius: 999px; padding: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
+    font-size: calc(var(--u) * 1.15); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--viola-testo);
+    margin-bottom: calc(var(--u) * 2);
+  }
+  .centrata .eyebrow { align-self: center; }
+  h1 {
+    font-size: calc(var(--u) * 4.4); line-height: 1.15; font-weight: 700; letter-spacing: -0.03em;
+    color: var(--ink); margin: 0 0 calc(var(--u) * 1.8);
+  }
+  h2 {
+    font-size: calc(var(--u) * 3.1); line-height: 1.18; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--ink); margin: 0 0 calc(var(--u) * 1.8);
+  }
+  .grad {
+    background: linear-gradient(90deg, var(--viola-testo), var(--viola));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.lead { font-size: calc(var(--u) * 1.65); color: var(--testo); max-width: 62ch; margin: 0 0 calc(var(--u) * 1.4); }
+  .centrata p.lead { margin-left: auto; margin-right: auto; }
+
+  ul.punti { list-style: none; padding: 0; margin: 0; }
+  ul.punti li {
+    position: relative; padding-left: calc(var(--u) * 1.8); margin-bottom: calc(var(--u) * 0.8);
+    font-size: calc(var(--u) * 1.5); color: var(--testo);
+  }
+  ul.punti li:last-child { margin-bottom: 0; }
+  ul.punti li::before { content: "›"; position: absolute; left: 0; color: var(--viola); font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 2.4); align-items: stretch; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * 1.6); }
+  .card {
+    border: 1px solid var(--bordo); background: var(--carta);
+    border-radius: calc(var(--u) * 1.1); padding: calc(var(--u) * 1.5) calc(var(--u) * 1.7);
+    box-shadow: 0 1px 3px rgba(26, 11, 46, 0.06);
+  }
+  .card.viola { border-color: var(--viola-bordo); background: var(--viola-tenue); }
+  .card.rosa { border-color: #F2C6D6; background: #FDF1F5; }
+  /* Card impilate dentro una colonna; quelle affiancate nella griglia restano allineate. */
+  .card + .card { margin-top: calc(var(--u) * 1.3); }
+  .cols > .card + .card, .cols3 > .card + .card { margin-top: 0; }
+  .card h3 {
+    font-size: calc(var(--u) * 1.15); text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--viola-testo); margin: 0 0 calc(var(--u) * 0.7);
+  }
+  .card.rosa h3 { color: var(--rosso); }
+  .card p { margin: 0; font-size: calc(var(--u) * 1.4); color: var(--testo); }
+  .card p + p { margin-top: calc(var(--u) * 0.5); }
+  .card ul.punti li { font-size: calc(var(--u) * 1.4); margin-bottom: calc(var(--u) * 0.5); }
+  .card .big { font-size: calc(var(--u) * 2.1); font-weight: 700; color: var(--ink); letter-spacing: -0.02em; line-height: 1.2; }
+  strong { color: var(--ink); }
+
+  .quote {
+    border-left: calc(var(--u) * 0.3) solid var(--viola); padding-left: calc(var(--u) * 1.6);
+    font-size: calc(var(--u) * 2); font-style: italic; color: var(--ink); margin: 0 0 calc(var(--u) * 2);
+  }
+  .persona-head { display: flex; align-items: center; gap: calc(var(--u) * 1.8); margin-bottom: calc(var(--u) * 2); }
+  .persona-head p.lead { margin: calc(var(--u) * 0.4) 0 0; }
+  .avatar {
+    width: calc(var(--u) * 6.5); height: calc(var(--u) * 6.5); border-radius: 50%; flex: 0 0 auto;
+    background: linear-gradient(135deg, var(--viola-testo), var(--viola)); color: #fff;
+    display: grid; place-items: center; font-size: calc(var(--u) * 2.3); font-weight: 700;
+  }
+  .flow { display: flex; align-items: center; gap: calc(var(--u) * 1); flex-wrap: wrap; }
+  .flow .step {
+    border: 1px solid var(--viola-bordo); background: var(--carta); color: var(--ink);
+    border-radius: calc(var(--u) * 0.8); padding: calc(var(--u) * 0.8) calc(var(--u) * 1.3);
+    font-size: calc(var(--u) * 1.4); font-weight: 600;
+  }
+  .flow .arrow { color: var(--viola-testo); font-size: calc(var(--u) * 1.8); font-weight: 700; }
+
+  table.conf { width: 100%; border-collapse: collapse; font-size: calc(var(--u) * 1.4); }
+  table.conf td {
+    padding: calc(var(--u) * 0.75) calc(var(--u) * 1); border-bottom: 1px solid var(--bordo); vertical-align: top;
+  }
+  table.conf td:first-child { color: var(--ink); font-weight: 600; }
+  table.conf td.prima { color: var(--rosso); }
+  table.conf td.dopo { color: var(--verde); font-weight: 600; }
+  table.conf th {
+    text-align: left; padding: 0 calc(var(--u) * 1) calc(var(--u) * 0.6); font-size: calc(var(--u) * 1.15);
+    text-transform: uppercase; letter-spacing: 0.15em; color: var(--tenue); font-weight: 600;
+    border-bottom: 2px solid var(--viola-bordo);
+  }
+
+  code.mono {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em;
+    background: var(--viola-tenue); border: 1px solid var(--viola-bordo);
+    border-radius: 0.3em; padding: 0.05em 0.35em; color: var(--viola-scuro); white-space: nowrap;
+  }
+  .claim-grande {
+    font-size: calc(var(--u) * 2); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25;
+    margin: calc(var(--u) * 2) 0 0; color: var(--ink);
+  }
+  .nota { font-size: calc(var(--u) * 1.2); color: var(--tenue); margin: calc(var(--u) * 1.6) 0 0; }
+  .nota code.mono { font-size: 1em; }
+
+  .chrome {
+    position: fixed; bottom: calc(var(--u) * 1.8); left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 calc(var(--u) * 7); font-size: calc(var(--u) * 1.15); text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--tenue); pointer-events: none;
+  }
+  .chrome .mark { color: var(--viola-testo); font-weight: 700; }
+  .dots { display: flex; gap: calc(var(--u) * 0.55); }
+  .dots i {
+    width: calc(var(--u) * 0.6); height: calc(var(--u) * 0.6); border-radius: 50%;
+    background: var(--viola-bordo); display: block;
+  }
+  .dots i.on { background: var(--viola); }
+</style>
+</head>
+<body>
+
+<!--
+  Tre minuti di parola, poi la demo. data-secondi è il tempo previsto per ogni slide:
+  /controlla-slide somma i secondi fino alla slide con data-demo e segnala se si sfora.
+-->
+
+<!-- 1 — TITOLO -->
+<section class="slide centrata attiva" data-secondi="10">
+  <span class="eyebrow">Hagenthon · Tema 01 — Accessibilità digitale</span>
+  <h1 style="font-size:calc(var(--u) * 8);margin-bottom:calc(var(--u) * 1.4)">VoceAmica<span class="grad">&gt;</span></h1>
+  <p class="lead">Un assistente vocale che accompagna Mario, 72 anni, fino in fondo:
+     una visita prenotata al CUP e una lettera dell'INPS finalmente capita.</p>
+  <p class="nota">Accenture Application Engineering · 5 ottobre 2026</p>
+</section>
+
+<!-- 2 — IL PROBLEMA -->
+<section class="slide" data-secondi="20">
+  <span class="eyebrow">Il problema</span>
+  <h1>Sono già online.<br />Non riescono ad <span class="grad">arrivare in fondo</span>.</h1>
+  <p class="lead">Il 72,5% delle persone fra 65 e 74 anni usa internet. Solo il 27,4% ha
+     competenze digitali di base. Il problema non è l'accesso: è il compito.</p>
+  <ul class="punti">
+    <li>Per prenotare una visita servono SPID, un codice prestazione e una classe di priorità</li>
+    <li>Le lettere arrivano scritte in una lingua che nessuno parla</li>
+    <li>Chi prova da solo si arrende al primo campo che non capisce</li>
+  </ul>
+  <p class="nota">Fonte: Istat, «Cittadini e ICT», 2025.</p>
+</section>
+
+<!-- 3 — LA PERSONA -->
+<section class="slide" data-secondi="24">
+  <span class="eyebrow">Deliverable 01 · Persona &amp; barriera</span>
+  <div class="persona-head">
+    <div class="avatar">MF</div>
+    <div>
+      <h2 style="margin:0">Mario Ferretti, 72 anni, Milano</h2>
+      <p class="lead">Pensionato. Lo SPID l'ha attivato al Comune, all'ultimo rinnovo della carta d'identità.</p>
+    </div>
+  </div>
+  <p class="quote">«Non voglio essere di peso a nessuno. Ma da solo, a un certo punto, mi perdo.»</p>
+  <div class="cols">
+    <div class="card viola">
+      <h3>Dove si blocca, esattamente</h3>
+      <p><strong>Passo 4 di 7 del portale CUP.</strong> Gli chiede branca specialistica, codice
+         prestazione, quesito diagnostico, classe di priorità, ricetta elettronica e data
+         dell'impegnativa. Non sa cosa siano: chiude la pagina.</p>
+    </div>
+    <div class="card">
+      <h3>Cosa stava provando a fare</h3>
+      <p>Prenotare la visita cardiologica prescritta dalla sua dottoressa.
+         E capire una lettera dell'INPS che gli chiede indietro euro 340,00.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 — LA SOLUZIONE -->
+<section class="slide" data-secondi="10">
+  <span class="eyebrow">La soluzione</span>
+  <h1 style="font-size:calc(var(--u) * 3.6)">VoceAmica: <span class="grad">chiami come chiameresti tuo figlio</span></h1>
+  <p class="lead">Nessuna app da imparare, nessun campo da compilare, nessuna password.
+     Mario preme un pulsante verde e parla. Come al telefono.</p>
+  <div class="flow" style="margin-top:calc(var(--u) * 1.4)">
+    <span class="step">Mario parla</span><span class="arrow">→</span>
+    <span class="step">VoceAmica capisce</span><span class="arrow">→</span>
+    <span class="step">VoceAmica agisce</span><span class="arrow">→</span>
+    <span class="step">Mario ha un codice di prenotazione</span>
+  </div>
+</section>
+
+<!-- 5 — COSA PUÒ CHIEDERE (gli use case della demo) -->
+<section class="slide" data-secondi="20">
+  <span class="eyebrow">Cosa sa fare</span>
+  <h2>Quattro cose che Mario chiede <span class="grad">a voce</span></h2>
+  <div class="cols">
+    <div class="card viola">
+      <h3>Prenota la visita</h3>
+      <p>Ha già l'impegnativa della sua dottoressa. VoceAmica propone gli orari liberi,
+         lui sceglie e riceve un codice.</p>
+    </div>
+    <div class="card">
+      <h3>Lo sblocca sul portale</h3>
+      <p>Quando si ferma su un campo che non capisce, glielo spiega e prosegue con lui.</p>
+    </div>
+    <div class="card">
+      <h3>Spiega i documenti ufficiali</h3>
+      <p>La lettera dell'INPS, un paragrafo alla volta, con gli importi letterali
+         e l'origine evidenziata nel documento.</p>
+    </div>
+    <div class="card">
+      <h3>Si ricorda di lui</h3>
+      <p>A fine chiamata scrive la sua scheda. Alla telefonata dopo non ripete niente.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 — PRIMA E DOPO -->
+<section class="slide" data-secondi="25">
+  <span class="eyebrow">Deliverable 02 · Percorso assistito</span>
+  <h2>Lo stesso obiettivo, due percorsi</h2>
+  <table class="conf">
+    <tr><th style="width:28%">&nbsp;</th><th style="width:40%">Prima</th><th style="width:32%">Con VoceAmica</th></tr>
+    <tr><td>Prenotare la visita</td>
+        <td class="prima">7 schermate; solo al passo 4, 10 campi di cui 6 obbligatori e incomprensibili</td>
+        <td class="dopo">2 frasi dette ad alta voce</td></tr>
+    <tr><td>Autenticazione</td>
+        <td class="prima">SPID livello 2, con sessione che scade</td>
+        <td class="dopo">Nessuna: risponde al telefono</td></tr>
+    <tr><td>Capire la lettera INPS</td>
+        <td class="prima">5 paragrafi, 2 riferimenti normativi, 0 spiegazioni</td>
+        <td class="dopo">Un paragrafo alla volta, importi intatti</td></tr>
+    <tr><td>Esito</td>
+        <td class="prima">Abbandono al passo 4, pratica mai conclusa</td>
+        <td class="dopo">Codice <code class="mono">CUP-2026-xxxx</code> e cosa portare</td></tr>
+    <tr><td>Chi serve accanto</td>
+        <td class="prima">Un familiare disponibile</td>
+        <td class="dopo">Nessuno</td></tr>
+  </table>
+  <p class="nota">Il prototipo mostra entrambe le viste: il portale di oggi e la chiamata.</p>
+</section>
+
+<!-- 7 — COME È FATTA -->
+<section class="slide" data-secondi="25">
+  <span class="eyebrow">Architettura · dove agisce l'AI</span>
+  <h2>Il modello sceglie, <span class="grad">il codice conferma</span></h2>
+  <p class="lead">«Questi dati da dove arrivano?» Qui la risposta è nel codice, non nelle intenzioni.</p>
+  <div class="cols">
+    <div class="card viola">
+      <h3>Cosa fa l'AI</h3>
+      <ul class="punti">
+        <li>Capisce cosa vuole Mario, detto a parole sue</li>
+        <li>Scrive in italiano semplice, due frasi per volta</li>
+        <li>Sceglie quale slot proporre e quale paragrafo citare</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Cosa non fa l'AI</h3>
+      <ul class="punti">
+        <li>Non inventa date, indirizzi, importi o codici: stanno solo in <code class="mono">data.js</code></li>
+        <li>Non conferma prenotazioni: lo fa <code class="mono">conferma_prenotazione()</code>, codice deterministico</li>
+        <li>Non riscrive gli importi: li ripete letterali e cita il paragrafo</li>
+      </ul>
+    </div>
+  </div>
+  <p class="claim-grande">Ogni risposta mostra la sua provenienza:
+     <span style="color:var(--verde)">dato verificato</span> o
+     <span style="color:var(--tenue)">spiegazione da confermare</span>.</p>
+</section>
+
+<!-- 8 — STRUTTURA AGENTICA -->
+<section class="slide" data-secondi="24">
+  <span class="eyebrow">La struttura agentica</span>
+  <h2>Come l'abbiamo costruita in tre ore</h2>
+  <p class="lead">Due persone, un repository, lavoro diviso per file: nessun conflitto.</p>
+  <div class="cols3">
+    <div class="card">
+      <h3>Istruzioni</h3>
+      <p><code class="mono">CLAUDE.md</code> scritto al minuto 10: stack,
+         tono per Mario, divieto di inventare dati.</p>
+    </div>
+    <div class="card">
+      <h3>Sottoagenti</h3>
+      <p><code class="mono">data-curator</code> sui dati, <code class="mono">ui-anziani</code>
+         sull'interfaccia, <code class="mono">revisore</code> prima del freeze.</p>
+    </div>
+    <div class="card">
+      <h3>Verifica</h3>
+      <p><code class="mono">/controlla-grounding</code> sul codice, <code class="mono">test.html</code>
+         in automatico, <code class="mono">/verifica-flussi</code> dal vivo.</p>
+    </div>
+  </div>
+  <div class="card viola" style="margin-top:calc(var(--u) * 1.6)">
+    <h3>La decisione che ha cambiato il progetto</h3>
+    <p>Il brief iniziale faceva inventare al modello date e ospedali. Trattarlo come un rischio,
+       non come un dettaglio, ha portato al livello dati deterministico.</p>
+  </div>
+  <p class="nota">Nel prodotto, due ruoli: VoceAmica parla con Mario, l'archivista scrive la sua scheda
+     di memoria.</p>
+</section>
+
+<!-- 9 — RISULTATO E LIMITI -->
+<section class="slide" data-secondi="22">
+  <span class="eyebrow">Deliverable 03 · Autonomia &amp; limiti</span>
+  <h2>Cosa guadagna Mario, e cosa resta aperto</h2>
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h3>Autonomia guadagnata</h3>
+        <p>Prenota una visita e capisce una lettera dell'INPS senza chiedere niente a nessuno.
+           A fine chiamata gli resta un riepilogo scritto.</p>
+      </div>
+      <div class="card">
+        <h3>Semplificato senza tradire</h3>
+        <p>Importi, date e scadenze ripetuti letterali. Il paragrafo di origine si evidenzia
+           nella lettera.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card rosa">
+        <h3>Limiti onesti</h3>
+        <ul class="punti">
+          <li>Prenotazioni simulate: non arrivano al CUP reale</li>
+          <li>Nessuna diagnosi, nessun consiglio fiscale o legale</li>
+          <li>Serve internet; funziona su Chrome ed Edge</li>
+          <li>Il riconoscimento vocale fatica sui dialetti marcati</li>
+        </ul>
+      </div>
+      <div class="card viola">
+        <h3>Prossimo passo</h3>
+        <p>CUP regionale reale, e un numero di telefono al posto del browser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 — DEMO -->
+<section class="slide centrata" data-demo>
+  <span class="eyebrow">Adesso</span>
+  <h1 style="font-size:calc(var(--u) * 8);margin:0">DEMO <span class="grad">LIVE</span></h1>
+  <p class="lead" style="margin-top:calc(var(--u) * 1.6)">Mario chiama. Vuole prenotare una visita cardiologica.</p>
+</section>
+
+<!-- 11 — CHIUSURA -->
+<section class="slide centrata">
+  <h1 style="font-size:calc(var(--u) * 6.5);margin-bottom:calc(var(--u) * 1.2)">Grazie<span class="grad">&gt;</span></h1>
+  <p class="lead" style="margin-bottom:calc(var(--u) * 2.2)">Il modello sceglie, il codice conferma.</p>
+  <div class="flow" style="justify-content:center">
+    <span class="step"><code class="mono">app/</code> il prototipo</span>
+    <span class="step"><code class="mono">agents/</code> la struttura agentica</span>
+    <span class="step"><code class="mono">presentation/</code> queste slide</span>
+  </div>
+</section>
+
+<div class="chrome">
+  <span>VoceAmica <span class="mark">&gt;</span> Hagenthon · Accenture Application Engineering</span>
+  <span class="dots" id="dots"></span>
+  <span id="contatore">1 / 11</span>
+</div>
+
+<script>
+  const slide = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  const dots = document.getElementById("dots");
+  const contatore = document.getElementById("contatore");
+  let corrente = 0;
+
+  slide.forEach(function () { dots.appendChild(document.createElement("i")); });
+
+  function vai(n) {
+    corrente = Math.max(0, Math.min(slide.length - 1, n));
+    slide.forEach(function (s, i) { s.classList.toggle("attiva", i === corrente); });
+    Array.prototype.forEach.call(dots.children, function (d, i) {
+      d.classList.toggle("on", i === corrente);
+    });
+    contatore.textContent = (corrente + 1) + " / " + slide.length;
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); vai(corrente + 1); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); vai(corrente - 1); }
+    if (e.key === "Home") vai(0);
+    if (e.key === "End") vai(slide.length - 1);
+    if (e.key === "f") document.documentElement.requestFullscreen();
+  });
+
+  document.addEventListener("click", function (e) {
+    vai(corrente + (e.clientX < window.innerWidth * 0.25 ? -1 : 1));
+  });
+
+  vai((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="utf-8" /><title>test</title></head>
+<body>
+<div id="out">in corso</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  const righe = [];
+  let ko = 0;
+
+  function eq(nome, ottenuto, atteso) {
+    const ok = ottenuto === atteso;
+    if (!ok) ko++;
+    righe.push((ok ? "ok   " : "FAIL ") + nome +
+      (ok ? "" : "\n        ottenuto: " + JSON.stringify(ottenuto) +
+                  "\n        atteso:   " + JSON.stringify(atteso)));
+  }
+  function vero(nome, cond) {
+    if (!cond) ko++;
+    righe.push((cond ? "ok   " : "FAIL ") + nome);
+  }
+
+  righe.push("--- i due file si sono caricati senza errori di sintassi ---");
+  vero("data.js definisce buildSystemPrompt", typeof buildSystemPrompt === "function");
+  vero("data.js definisce buildPromptArchivista", typeof buildPromptArchivista === "function");
+  vero("app.js definisce parla", typeof parla === "function");
+  vero("app.js definisce vocePreferita", typeof vocePreferita === "function");
+  vero("app.js definisce spezzaInFrasi", typeof spezzaInFrasi === "function");
+
+  righe.push("--- pronuncia ---");
+  eq("orario 09:30",        perLaVoce("Ti aspetto alle 09:30 in reparto."), "Ti aspetto alle 9 e 30 in reparto.");
+  eq("orario 15:00",        perLaVoce("Alle 15:00 va bene?"),               "Alle 15 e bene?".replace("e bene", "va bene"));
+  eq("euro 340,00",         perLaVoce("Sono euro 340,00 in tutto."),        "Sono 340 euro in tutto.");
+  eq("23,30 euro",          perLaVoce("Il ticket e 23,30 euro."),           "Il ticket e 23 euro e 30.");
+  eq("codice con trattini", perLaVoce("Il codice e CUP-2026-1234, segnalo."), "Il codice e CUP 2026 1234, segnalo.");
+  eq("dott.ssa",            perLaVoce("Portala alla dott.ssa Carli."),      "Portala alla dottoressa Carli.");
+  eq("marcatore paragrafo", perLaVoce("Non devi fare niente tu. [P3]"),     "Non devi fare niente tu.");
+  eq("marcatore multiplo",  perLaVoce("Te li tolgono un po' alla volta. [P2, P3]"), "Te li tolgono un po' alla volta.");
+  eq("paragrafi estratti",  estraiParagrafi("Uno [P2-P3]. Due [P9].").join(","), "P2,P3");
+  eq("articolo e numero",   perLaVoce("Vedi art. 13, pensione n. 4455."),   "Vedi articolo 13, pensione numero 4455.");
+
+  righe.push("--- respiro fra le frasi ---");
+  const f = spezzaInFrasi(perLaVoce("Certo Mario, ci penso io. Sto cercando adesso i cardiologi disponibili a Milano. Quale ti e piu comoda?"));
+  eq("numero di frasi", f.length, 3);
+  eq("prima frase", f[0], "Certo Mario, ci penso io.");
+  const corte = spezzaInFrasi("Si. Ho prenotato per te la visita di martedi.");
+  eq("frammento corto accorpato", corte.length, 1);
+
+  righe.push("--- prompt ---");
+  const senza = buildSystemPrompt("", []);
+  const con = buildSystemPrompt("# Mario\n## In sospeso\n- niente", [{
+    codice: "CUP-2026-9999", prestazione: "Visita cardiologica", data: "martedi 13 ottobre 2026",
+    ora: "09:30", struttura: "Policlinico", indirizzo: "Via Sforza 35", ticket: "23,30 euro",
+    cosa_portare: ["Tessera sanitaria"]
+  }]);
+  vero("regola anti-invenzione presente",      senza.indexOf("Non inventare mai") !== -1);
+  vero("clausola MEMORIA presente",            senza.indexOf("Vale anche per <MEMORIA>") !== -1);
+  vero("senza memoria non c'e il blocco",      senza.indexOf("<MEMORIA>\nQuesta") === -1);
+  vero("con memoria il blocco c'e",            con.indexOf("</MEMORIA>") !== -1);
+  vero("prenotazione confermata nei verificati", con.indexOf("CUP-2026-9999") !== -1 &&
+       con.indexOf("PRENOTAZIONI GIÀ CONFERMATE") < con.indexOf("</DATI_VERIFICATI>"));
+  vero("enum del tool generato dagli slot",
+       JSON.stringify(TOOL_CONFERMA_PRENOTAZIONE.input_schema.properties.slot_id.enum) ===
+       JSON.stringify(CUP_SLOTS.map(function (s) { return s.id; })));
+
+  righe.push(ko === 0 ? "=== TUTTO OK ===" : "=== " + ko + " FALLITI ===");
+  document.getElementById("out").textContent = righe.join("\n");
+})();
+</script>
+</body>
+</html>

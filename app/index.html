@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VoceAmica — l'assistente che Mario chiama al telefono</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --verde: #15803d;
+    --verde-bg: #dcfce7;
+    --rosso: #b91c1c;
+    --grigio: #64748b;
+    --bordo: #d8e0e9;
+    --ink: #0f172a;
+  }
+  * { box-sizing: border-box; }
+  /* Focus ben visibile per chi usa la tastiera: l'anello di default del browser
+     sparisce sui pulsanti colorati. */
+  :focus-visible { outline: 3px solid var(--accent-dark); outline-offset: 3px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px;
+    line-height: 1.55;
+  }
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--bordo);
+    padding: 14px 24px; display: flex; align-items: baseline; gap: 14px;
+  }
+  .topbar h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  .topbar .claim { color: var(--grigio); font-size: 15px; }
+  .layout {
+    display: grid; grid-template-columns: 35% 1fr; gap: 20px;
+    max-width: 1400px; margin: 0 auto; padding: 20px 24px 40px;
+    align-items: start;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--bordo); border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06); padding: 20px; margin-bottom: 18px;
+  }
+  .card h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.12em;
+             color: var(--grigio); margin: 0 0 14px; }
+
+  /* --- scheda Mario --- */
+  .mario-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .avatar {
+    width: 64px; height: 64px; border-radius: 50%; flex: 0 0 64px;
+    background: #cfe0f7; color: var(--accent-dark);
+    display: grid; place-items: center; font-size: 26px; font-weight: 700;
+  }
+  .mario-head .nome { font-size: 21px; font-weight: 700; }
+  .mario-head .eta { color: var(--grigio); font-size: 16px; }
+  .barriera {
+    background: #fff7ed; border-left: 4px solid #ea580c; border-radius: 0 8px 8px 0;
+    padding: 12px 14px; font-size: 16px; margin-bottom: 14px;
+  }
+  .barriera b { display: block; font-size: 14px; text-transform: uppercase;
+                letter-spacing: 0.1em; color: #c2410c; margin-bottom: 4px; }
+  .riga { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid #eef2f7; font-size: 16px; }
+  .riga .k { color: var(--grigio); flex: 0 0 38%; }
+  .riga .v { flex: 1; }
+  .storico { font-size: 15px; color: var(--grigio); margin-top: 10px; }
+  .storico li { margin-bottom: 6px; }
+
+  .card-limiti { background: #f8fafc; }
+  .card-limiti ul { margin: 0; padding-left: 20px; font-size: 18px; color: #475569; }
+  .card-limiti li { margin-bottom: 6px; }
+
+  details.setup summary {
+    cursor: pointer; font-size: 17px; color: var(--accent-dark);
+    min-height: 56px; display: flex; align-items: center;
+  }
+  details.setup input {
+    width: 100%; min-height: 56px; margin-top: 10px; padding: 12px; font-size: 16px;
+    border: 1px solid var(--bordo); border-radius: 8px; font-family: inherit;
+  }
+  .hint { font-size: 14px; color: var(--grigio); margin-top: 8px; }
+
+  /* --- tab --- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tabs button {
+    font: inherit; font-size: 18px; min-height: 56px; padding: 0 22px; border-radius: 10px;
+    border: 1px solid var(--bordo); background: #fff; color: var(--grigio); cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] {
+    background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 600;
+  }
+
+  /* --- vista PRIMA: replica del portale --- */
+  .prima-intro {
+    background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px;
+    padding: 14px 18px; font-size: 16px; margin-bottom: 16px;
+  }
+  .prima-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .portale {
+    background: #fff; border: 1px solid #c9d2db; border-radius: 4px;
+    font-family: Verdana, Geneva, sans-serif; font-size: 13px; color: #333; overflow: hidden;
+  }
+  .portale-head {
+    background: #0a4b78; color: #fff; padding: 8px 10px; font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .portale-spid {
+    background: #eef3f7; border-bottom: 1px solid #c9d2db;
+    padding: 6px 10px; font-size: 11px; color: #555;
+  }
+  .portale-body { padding: 10px; }
+  .steps { font-size: 11px; color: #666; margin-bottom: 10px; }
+  .steps b { color: #0a4b78; }
+  .portale label { display: block; font-size: 11px; color: #444; margin: 7px 0 2px; }
+  .portale label .req { color: #c00; }
+  .portale select, .portale input[type=text] {
+    width: 100%; font-size: 12px; padding: 4px 5px; border: 1px solid #9aa7b4;
+    border-radius: 2px; background: #fff; font-family: inherit; color: #333;
+  }
+  .portale .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .portale-err {
+    background: #fdecea; border: 1px solid #f5c2c0; color: #a11; font-size: 11px;
+    padding: 6px 8px; margin: 10px 0 0; border-radius: 2px;
+  }
+  .portale-foot { padding: 10px; border-top: 1px solid #e4e9ee; display: flex; gap: 8px; }
+  .portale-foot button {
+    font-family: inherit; font-size: 12px; padding: 5px 14px; border-radius: 2px;
+    border: 1px solid #9aa7b4; background: #e9eef3; color: #666;
+  }
+  .portale-foot button.primario { background: #0a4b78; border-color: #0a4b78; color: #fff; opacity: 0.45; }
+
+  /* --- lettera --- */
+  .lettera {
+    background: #fff; border: 1px solid #c9d2db; border-radius: 4px; padding: 16px 18px;
+    font-family: Georgia, "Times New Roman", serif; font-size: 13.5px; color: #2b2b2b; line-height: 1.5;
+  }
+  .lettera-head { border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 12px; font-size: 12px; color: #555; }
+  .lettera-head .mitt { font-weight: 700; color: #1a1a1a; font-size: 13px; }
+  .lettera-ogg { font-weight: 700; margin-bottom: 12px; font-size: 13px; }
+  .lettera p { margin: 0 0 10px; transition: background 0.3s, box-shadow 0.3s; padding: 3px 5px; border-radius: 3px; }
+  .lettera p.evidenziato { background: #fff3c4; box-shadow: 0 0 0 2px #fde047; }
+  /* Il corpo piccolo è voluto solo nella scheda «come fa Mario oggi», dove fa parte
+     del problema mostrato. La lettera che Mario legge durante la chiamata no. */
+  #lettera-live { font-size: 18px; line-height: 1.6; }
+  #lettera-live .lettera-head, #lettera-live .lettera-head .mitt,
+  #lettera-live .lettera-ogg { font-size: 16px; }
+  #lettera-live p { padding: 5px 7px; }
+
+  /* --- chiamata --- */
+  .call-stage {
+    background: #fff; border: 1px solid var(--bordo); border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    padding: 28px 24px; text-align: center; min-height: 290px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  }
+  .cerchio {
+    width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 42px; background: #e8eef7;
+  }
+  .cerchio.pulse-blu { background: #dbeafe; animation: pulse 1.4s ease-in-out infinite; }
+  .cerchio.pulse-verde { background: #dcfce7; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.35); }
+    50%     { box-shadow: 0 0 0 18px rgba(37,99,235,0); }
+  }
+  /* Lo stato è sempre scritto in #stato-testo: l'animazione si può togliere senza perdere nulla. */
+  @media (prefers-reduced-motion: reduce) { .cerchio { animation: none !important; } }
+  .stato-testo { font-size: 20px; font-weight: 600; }
+  .parlato { font-size: 19px; color: var(--grigio); min-height: 28px; max-width: 640px; }
+  .risposta { font-size: 22px; line-height: 1.5; max-width: 660px; }
+  .btn {
+    font: inherit; font-size: 19px; font-weight: 600; min-height: 56px;
+    padding: 0 32px; border-radius: 12px; border: 0; cursor: pointer;
+  }
+  /* Bianco su #16a34a era 3,3:1, sotto soglia: si usa il verde scuro (circa 5:1). */
+  .btn-chiama { background: #15803d; color: #fff; }
+  .btn-chiama:hover { background: #166534; }
+  .btn-riaggancia { background: #dc2626; color: #fff; }
+  .btn-riaggancia:hover { background: #b91c1c; }
+
+  .demo-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .btn-demo {
+    font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 999px;
+    border: 1px dashed var(--accent); background: #fff; color: var(--accent-dark); cursor: pointer;
+  }
+  .fallback { margin-top: 16px; display: none; gap: 8px; justify-content: center; }
+  .fallback.attivo { display: flex; }
+  .fallback input {
+    flex: 1; max-width: 420px; min-height: 56px; padding: 13px; font-size: 18px; font-family: inherit;
+    border: 1px solid var(--bordo); border-radius: 10px;
+  }
+  .fallback button {
+    font: inherit; font-size: 17px; padding: 0 22px; min-height: 56px;
+    border: 0; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer;
+  }
+
+  .avviso { display: none; margin-bottom: 14px; padding: 13px 16px; border-radius: 10px;
+            background: #fef2f2; border: 1px solid #fecaca; color: var(--rosso); font-size: 16px; }
+  .avviso.attivo { display: block; }
+
+  /* --- bolle --- */
+  .bolle { margin-top: 18px; max-height: 320px; overflow-y: auto; padding-right: 6px; }
+  .bolla { margin-bottom: 14px; display: flex; flex-direction: column; max-width: 76%; }
+  .bolla.mario { margin-left: auto; align-items: flex-end; }
+  .bolla .testo {
+    padding: 12px 16px; border-radius: 16px; font-size: 18px; line-height: 1.5;
+  }
+  .bolla.mario .testo { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .bolla.voce .testo { background: #fff; border: 1px solid var(--bordo); border-bottom-left-radius: 4px; }
+  .chip {
+    font-size: 15px; margin-top: 5px; padding: 3px 10px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .chip.verificato { background: var(--verde-bg); color: var(--verde); }
+  .chip.generato { background: #f1f5f9; color: #475569; }
+
+  /* --- prenotazione + riepilogo --- */
+  .esito {
+    display: none; margin-top: 18px; background: var(--verde-bg);
+    border: 1px solid #86efac; border-radius: 14px; padding: 20px;
+  }
+  .esito.attivo { display: block; }
+  .esito h3 { margin: 0 0 6px; font-size: 20px; color: var(--verde); }
+  .esito .codice {
+    font-size: 26px; font-weight: 700; letter-spacing: 0.04em;
+    font-family: ui-monospace, Menlo, Consolas, monospace; margin: 8px 0 12px;
+  }
+  .esito ul { margin: 8px 0 0; padding-left: 22px; font-size: 18px; }
+
+  .riepilogo { display: none; }
+  .riepilogo.attivo { display: block; }
+  .riepilogo .blocco { margin-bottom: 18px; }
+  /* Nel riepilogo i titoli sono la mappa di Mario («Cosa devi fare tu»): 20px, scuri. */
+  .riepilogo .card > h2 { font-size: 20px; color: var(--ink); text-transform: none; letter-spacing: 0; }
+  .riepilogo .blocco h3 {
+    font-size: 20px; font-weight: 700; color: var(--ink); margin: 0 0 7px;
+  }
+  .riepilogo .blocco p, .riepilogo .blocco li { font-size: 20px; margin: 0 0 6px; }
+  .riepilogo .non-posso { background: #f8fafc; border-radius: 10px; padding: 14px 18px; }
+  .riepilogo .non-posso li { font-size: 20px; color: #475569; }
+
+  /* --- scheda di memoria --- */
+  .scheda-intro { font-size: 17px; color: #475569; margin: 0 0 14px; }
+  .scheda-stato {
+    font-size: 15px; color: var(--accent-dark); background: #eff6ff;
+    border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+  }
+  .scheda-testo {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word; margin: 0 0 16px;
+    background: #f8fafc; border: 1px solid var(--bordo); border-radius: 10px;
+    padding: 16px 18px; max-height: 340px; overflow-y: auto;
+  }
+  .scheda-azioni { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-secondario {
+    font: inherit; font-size: 17px; min-height: 56px; padding: 0 24px;
+    border-radius: 12px; border: 1px solid var(--bordo); background: #fff;
+    color: var(--ink); cursor: pointer;
+  }
+  .btn-secondario:hover { background: #f1f5f9; }
+  .btn-secondario:disabled { opacity: 0.45; cursor: default; }
+  .btn-secondario.pericolo { color: var(--rosso); border-color: #fecaca; }
+  .btn-secondario.pericolo:hover { background: #fef2f2; }
+  .scheda-nota { font-size: 14px; color: var(--grigio); margin: 14px 0 0; }
+
+  .nascosto { display: none !important; }
+
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+    .prima-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>VoceAmica</h1>
+  <span class="claim">chiami come chiameresti tuo figlio</span>
+</div>
+
+<div class="layout">
+
+  <!-- ============================ COLONNA SINISTRA ============================ -->
+  <div>
+    <div class="card">
+      <div class="mario-head">
+        <div class="avatar">MF</div>
+        <div>
+          <div class="nome" id="m-nome">Mario Ferretti</div>
+          <div class="eta" id="m-eta">72 anni · Milano</div>
+        </div>
+      </div>
+
+      <div class="barriera">
+        <b>Dove si blocca oggi</b>
+        <span id="m-barriera"></span>
+      </div>
+
+      <div class="riga"><span class="k">Medico di base</span><span class="v" id="m-medico"></span></div>
+      <div class="riga"><span class="k">Telefono</span><span class="v" id="m-tel"></span></div>
+      <div class="riga"><span class="k">Farmaci</span><span class="v" id="m-farmaci"></span></div>
+      <div class="riga"><span class="k">Tessera sanitaria</span><span class="v" id="m-tessera"></span></div>
+
+      <div class="storico">
+        <div style="margin-bottom:4px"><strong>Ultime volte che ci siamo parlati</strong></div>
+        <ul id="m-storico" style="margin:0;padding-left:20px"></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Accesso</h2>
+      <details class="setup">
+        <summary>Imposta la chiave API</summary>
+        <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
+        <div class="hint">Resta solo in memoria: non viene salvata né inviata altrove.</div>
+      </details>
+    </div>
+
+    <div class="card card-limiti">
+      <h2>Cosa VoceAmica non può fare</h2>
+      <ul id="lista-limiti"></ul>
+    </div>
+  </div>
+
+  <!-- ============================= COLONNA DESTRA ============================= -->
+  <div>
+    <div class="tabs" role="tablist">
+      <button id="tab-prima" role="tab" aria-selected="false">Come fa Mario oggi</button>
+      <button id="tab-voce" role="tab" aria-selected="true">VoceAmica</button>
+    </div>
+
+    <!-- ---------------------------- VISTA PRIMA ---------------------------- -->
+    <section id="vista-prima" class="nascosto">
+      <div class="prima-intro">
+        <strong>Questo è ciò che Mario vede oggi.</strong>
+        Per prenotare da solo deve superare il login SPID e compilare il passo 4 di 7,
+        dove gli vengono chiesti la branca specialistica, il codice prestazione e la
+        classe di priorità. È qui che si ferma e chiama suo figlio.
+      </div>
+
+      <div class="prima-grid">
+        <!-- replica del portale CUP -->
+        <div class="portale">
+          <div class="portale-head">
+            <span>Prenotazione Online — Servizio Sanitario Regionale</span>
+            <span>?</span>
+          </div>
+          <div class="portale-spid">Utente autenticato tramite SPID livello 2 — sessione valida 19:42</div>
+          <div class="portale-body">
+            <div class="steps">Prenotazione nuova &gt; <b>Passo 4 di 7: dati della prestazione</b></div>
+
+            <label>Branca specialistica <span class="req">*</span></label>
+            <select><option>-- Selezionare --</option></select>
+
+            <label>Codice prestazione (nomenclatore reg.) <span class="req">*</span></label>
+            <input type="text" placeholder="es. 89.7B.4" />
+
+            <label>Quesito diagnostico riportato sull'impegnativa <span class="req">*</span></label>
+            <input type="text" />
+
+            <div class="due">
+              <div>
+                <label>Classe di priorità <span class="req">*</span></label>
+                <select><option>-- Selezionare --</option></select>
+              </div>
+              <div>
+                <label>Tipo accesso</label>
+                <select><option>Primo accesso</option></select>
+              </div>
+            </div>
+
+            <div class="due">
+              <div>
+                <label>Codice esenzione</label>
+                <input type="text" placeholder="opzionale" />
+              </div>
+              <div>
+                <label>Regime di erogazione</label>
+                <select><option>-- Selezionare --</option></select>
+              </div>
+            </div>
+
+            <div class="due">
+              <div>
+                <label>N. ricetta elettronica (NRE) <span class="req">*</span></label>
+                <input type="text" placeholder="15 cifre" />
+              </div>
+              <div>
+                <label>Data impegnativa <span class="req">*</span></label>
+                <input type="text" placeholder="gg/mm/aaaa" />
+              </div>
+            </div>
+
+            <label>Ambito territoriale di ricerca</label>
+            <select><option>ATS Città Metropolitana di Milano</option></select>
+
+            <div class="portale-err">
+              Campi obbligatori non compilati: Branca specialistica, Codice prestazione,
+              Quesito diagnostico, Classe di priorità, NRE, Data impegnativa.
+            </div>
+          </div>
+          <div class="portale-foot">
+            <button>Indietro</button>
+            <button class="primario">Avanti &gt;</button>
+          </div>
+        </div>
+
+        <!-- lettera originale -->
+        <div>
+          <div class="lettera" id="lettera-prima"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------- VISTA CHIAMATA --------------------------- -->
+    <section id="vista-chiamata">
+      <div class="avviso" id="avviso" role="alert"></div>
+
+      <div class="call-stage" id="stage">
+        <div class="cerchio" id="cerchio" aria-hidden="true">📞</div>
+        <div class="stato-testo" id="stato-testo" aria-live="polite">Premi il pulsante verde per chiamare VoceAmica</div>
+        <div class="parlato" id="parlato"></div>
+        <div class="risposta" id="risposta"></div>
+        <div>
+          <button class="btn btn-chiama" id="btn-chiama">📞 Chiama VoceAmica</button>
+          <button class="btn btn-riaggancia nascosto" id="btn-riaggancia">🔴 Riaggancia</button>
+        </div>
+      </div>
+
+      <div class="demo-row nascosto" id="demo-row">
+        <button class="btn-demo" id="demo-a">Demo: prenotazione visita</button>
+        <button class="btn-demo" id="demo-b">Demo: lettera INPS</button>
+      </div>
+
+      <div class="fallback" id="fallback">
+        <input type="text" id="input-testo" placeholder="Scrivi qui cosa vuoi dire…" aria-label="Scrivi qui cosa vuoi dire" />
+        <button id="btn-invia">Invia</button>
+      </div>
+
+      <div class="esito" id="esito"></div>
+
+      <div class="card nascosto" id="card-lettera-live" style="margin-top:18px">
+        <h2>La tua lettera — il punto di cui stiamo parlando</h2>
+        <div class="lettera" id="lettera-live"></div>
+      </div>
+
+      <div class="bolle" id="bolle" role="log" aria-live="polite" aria-label="La conversazione"></div>
+    </section>
+
+    <!-- --------------------------- VISTA RIEPILOGO -------------------------- -->
+    <section id="vista-riepilogo" class="riepilogo">
+      <div class="card">
+        <h2 id="r-titolo" tabindex="-1">Riepilogo della chiamata</h2>
+        <div class="blocco">
+          <h3>Cosa hai chiesto</h3>
+          <p id="r-chiesto"></p>
+        </div>
+        <div class="blocco">
+          <h3>Cosa è stato fatto</h3>
+          <div id="r-fatto"></div>
+        </div>
+        <div class="blocco">
+          <h3>Cosa devi fare tu</h3>
+          <div id="r-tuo"></div>
+        </div>
+        <div class="blocco non-posso">
+          <h3>Cosa VoceAmica non può fare</h3>
+          <ul id="r-limiti"></ul>
+        </div>
+        <button class="btn btn-chiama" id="btn-nuova">📞 Fai una nuova chiamata</button>
+      </div>
+
+      <div class="card nascosto" id="card-scheda">
+        <h2>La tua scheda</h2>
+        <p class="scheda-intro">
+          Questo è ciò che VoceAmica si ricorda di te, scritto in chiaro.
+          Alla prossima chiamata ripartirà da qui, così non devi ripetere tutto da capo.
+        </p>
+        <div class="scheda-stato" id="scheda-stato" aria-live="polite"></div>
+        <pre class="scheda-testo" id="scheda-testo"></pre>
+        <div class="scheda-azioni">
+          <button class="btn-secondario" id="btn-scarica-scheda">Scarica la scheda</button>
+          <button class="btn-secondario pericolo" id="btn-dimentica-scheda">Cancella tutto</button>
+        </div>
+        <p class="scheda-nota">
+          Scritta dall'AI a partire da questa telefonata e salvata solo in questo browser,
+          su questo computer. Si può rileggere, scaricare e cancellare in ogni momento.
+        </p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

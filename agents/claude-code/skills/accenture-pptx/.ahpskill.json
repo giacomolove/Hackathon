@@ -1,0 +1,20 @@
+{
+  "name": "accenture-pptx",
+  "description": "This skill should be used when the user asks to \"create an Accenture presentation\", \"make a PPTX\", \"generate a PowerPoint\", \"build slides\", \"create a deck\", \"make an Accenture deck\", or mentions creating a branded presentation for a client.",
+  "compatibility": [
+    "Claude Code",
+    "OpenAI Codex",
+    "GitHub Copilot",
+    "Gemini CLI"
+  ],
+  "tags": [
+    "presentation",
+    "pptx",
+    "ppt",
+    "powerpoint"
+  ],
+  "access": "public",
+  "allowedTeams": [],
+  "author": "Andrea Lombardi",
+  "updatedAt": "2026-04-23T07:53:49.694Z"
+}
